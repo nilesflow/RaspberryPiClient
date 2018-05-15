@@ -1,0 +1,124 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "2018-05-15T20:53:27Z",
+    "title": "Raspberry pi"
+  },
+  "host": "api-raspberrypi-slack.nilesflow.net",
+  "schemes": [
+    "https"
+  ],
+  "paths": {
+    "/raspberrypi/{proxy+}": {
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "proxy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/Empty"
+            }
+          },
+          "400": {
+            "description": "400 response",
+            "schema": {
+              "$ref": "#/definitions/Empty"
+            }
+          },
+          "500": {
+            "description": "500 response",
+            "schema": {
+              "$ref": "#/definitions/Empty"
+            }
+          }
+        },
+        "security": [
+          {
+            "AuthorizationRequestToken": []
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "クエリ文字列パラメータおよびヘッダーの検証",
+        "x-amazon-apigateway-integration": {
+          "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:707983430756:function:APIGateway-RaspberyPi/invocations",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseTemplates": {
+                "application/json": "## for slack Outgoing Webhooks\n## 全て200の単一フォーマットで返却\n#set ($inputRoot = $input.path('$'))\n\n## Lambdaで正常に処理された場合\n#if ($input.path('$.statusCode') > 0)\n\n## 200の場合のフォーマット\n#if ($input.path('$.statusCode') == 200)\n#set ($body = $util.parseJson($input.path('$.body')))\n{\n  \"text\" : \"$body.message\"\n}\n\n## それ以外の場合のフォーマット\n#else ## 200\n#set ($body = $util.parseJson($input.path('$.body')))\n{\n  \"text\" : \"$body.error: $body.error_description\"\n}\n#end ## not 200\n\n## 例外等\n#else ## statusCode\n{\n  \"text\" : \"$input.path('$.errorMessage')\"\n}\n#end ## not statusCode"
+              }
+            }
+          },
+          "requestParameters": {
+            "integration.request.path.proxy": "method.request.path.proxy"
+          },
+          "passthroughBehavior": "never",
+          "httpMethod": "POST",
+          "requestTemplates": {
+            "application/x-www-form-urlencoded": "## slackのOutgoing Webhooksから下記の形式で送信される\n## token=viK8ruCmEfBjd9u84MOEeTWo\n## team_id=T0001\n## team_domain=例\n## channel_id=C2147483705\n## channel_name=テスト\n## timestamp=1355517523.000005\n## user_id=U2147483697\n## user_name=スティーブ\n## text=googlebot: 身軽なツバメの対気速度はどのくらい？\n## trigger_word=googlebot:\n\n## POSTパラメータの分割（A=x&B=y）\n#set($aParams = $input.body.split(\"&\"))\n\n## path変数の分割\n#set($aPaths = $input.params('proxy').split(\"/\"))\n\n## 出力されるJSONデータの生成\n{\n ##pathの次階層をactionとする\n \"action\" : \"$aPaths[0]\",\n\n## 必要なPOSTパラメータのみをマッピング\n#foreach( $param in $aParams)\n #set($hParam = $param.split(\"=\"))\n #if( $hParam[0] == \"text\")\n \"text\" : \"$util.urlDecode($hParam[1])\",\n #end\n #if( $hParam[0] == \"user_name\")\n \"user\" : \"$util.urlDecode($hParam[1])\",\n #end\n#end\n\n ## カンマ制御のためのダミー\n \"dummy\" : null\n}"
+          },
+          "contentHandling": "CONVERT_TO_TEXT",
+          "type": "aws"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "AuthorizationRequestToken": {
+      "type": "apiKey",
+      "name": "token",
+      "in": "query",
+      "x-amazon-apigateway-authtype": "custom",
+      "x-amazon-apigateway-authorizer": {
+        "authorizerUri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:707983430756:function:APIGateway-Authorization/invocations",
+        "authorizerResultTtlInSeconds": 300,
+        "identitySource": "method.request.querystring.token",
+        "type": "request"
+      }
+    }
+  },
+  "definitions": {
+    "Empty": {
+      "type": "object",
+      "title": "Empty Schema"
+    }
+  },
+  "x-amazon-apigateway-gateway-responses": {
+    "DEFAULT_5XX": {
+      "statusCode": 200,
+      "responseTemplates": {
+        "application/json": "{\"text\":$context.error.messageString}"
+      }
+    },
+    "DEFAULT_4XX": {
+      "statusCode": 200,
+      "responseTemplates": {
+        "application/json": "{\"text\":$context.error.messageString}"
+      }
+    }
+  },
+  "x-amazon-apigateway-request-validators": {
+    "クエリ文字列パラメータおよびヘッダーの検証": {
+      "validateRequestParameters": true,
+      "validateRequestBody": false
+    }
+  }
+}
