@@ -1,12 +1,24 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# standard modules
+import os
+import sys
 import logging
 
-# user modules 
-from exception import Error, ParamError
-from util import success, error
-from raspberrypi import RaspberryPi
+# 実行ディレクトリ＆モジュールパス設定
+dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(dir)
+sys.path.append(dir + '/site-packages')
+sys.path.append(dir + '/user-packages')
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# user modules 
+from pyfw.error.error import Error
+from pyfw.error.httperror import HttpParamError, HttpInternalError
+from pyfw import util
+from lambdautil import apigateway
+
+from raspberrypi import RaspberryPi
 
 def lambda_handler(event, context):
     """
@@ -21,11 +33,14 @@ def lambda_handler(event, context):
     """
 
     try:
+        logger = logging.getLogger(__file__)
+        logger.setLevel(logging.DEBUG)
+
         logger.info(event)
     
         # パラメータを取得
         if 'action' not in event:
-            raise ParamError("actionが指定されていません。")
+            raise HttpParamError("actionが指定されていません。")
         action = event['action']
 
         user = None
@@ -36,23 +51,34 @@ def lambda_handler(event, context):
         if action == 'speak': 
             # パラメータ準備
             if 'text' not in event:
-                raise ParamError("textが指定されていません。")
+                raise HttpParamError("textが指定されていません。")
             text = event['text']
 
             # 音声出力処理
-            RaspberryPi(logger).speak(text)
+            cwd = os.getcwd()
+            pi = RaspberryPi(
+                host = os.environ['SUBSCRIBE_HOST'] if 'SUBSCRIBE_HOST' in os.environ else None,
+                ca = cwd + '/' + os.environ['SUBSCRIBE_CAROOTFILE'] if 'SUBSCRIBE_CAROOTFILE' in os.environ else None,
+                cert = cwd + '/' + os.environ['SUBSCRIBE_CERTFILE'] if 'SUBSCRIBE_CERTFILE' in os.environ else None,
+                key = cwd + '/' + os.environ['SUBSCRIBE_KEYFILE'] if 'SUBSCRIBE_KEYFILE' in os.environ else None,
+                logging = logging
+            )
+            result = pi.speak(text)
+            logger.info(result)
 
         else:
-            raise ParamError("定義されていないactionです。")
+            raise HttpParamError("定義されていないactionです。")
 
         # 正常終了
-        return success("RaspberryPiへリクエストを送信しました。invoked %s" % (user))
+        return apigateway.success(result + "invoked %s" % (user))
 
     except Error as e:
         logger.error(e)
-        return error(e.statusCode, e.error, e.description)
+        return apigateway.error(e.statusCode, e.error, e.description)
 
-    except Exception as e:
-        logger.error(e)
-        return error(500, "server_error", "内部エラーが発生しました。")
+    except Exception as exp:
+        logger.critical(exp)
+        logger.critical(util.trace())
+        e = HttpInternalError("内部エラーが発生しました。")
+        return apigateway.error(e.statusCode, e.error, e.description)
 
