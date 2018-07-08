@@ -1,10 +1,10 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "2018-05-15T20:53:27Z",
+    "version": "2018-06-30T17:37:09Z",
     "title": "Raspberry pi"
   },
-  "host": "api-raspberrypi-slack.nilesflow.net",
+  "host": "example.com",
   "schemes": [
     "https"
   ],
@@ -21,6 +21,12 @@
           {
             "name": "Content-Type",
             "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "token",
+            "in": "query",
             "required": true,
             "type": "string"
           },
@@ -58,7 +64,7 @@
         ],
         "x-amazon-apigateway-request-validator": "クエリ文字列パラメータおよびヘッダーの検証",
         "x-amazon-apigateway-integration": {
-          "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:707983430756:function:APIGateway-RaspberyPi/invocations",
+          "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:{aws-account-id}:function:RaspberryPiClient/invocations",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -73,7 +79,7 @@
           "passthroughBehavior": "never",
           "httpMethod": "POST",
           "requestTemplates": {
-            "application/x-www-form-urlencoded": "## slackのOutgoing Webhooksから下記の形式で送信される\n## token=viK8ruCmEfBjd9u84MOEeTWo\n## team_id=T0001\n## team_domain=例\n## channel_id=C2147483705\n## channel_name=テスト\n## timestamp=1355517523.000005\n## user_id=U2147483697\n## user_name=スティーブ\n## text=googlebot: 身軽なツバメの対気速度はどのくらい？\n## trigger_word=googlebot:\n\n## POSTパラメータの分割（A=x&B=y）\n#set($aParams = $input.body.split(\"&\"))\n\n## path変数の分割\n#set($aPaths = $input.params('proxy').split(\"/\"))\n\n## 出力されるJSONデータの生成\n{\n ##pathの次階層をactionとする\n \"action\" : \"$aPaths[0]\",\n\n## 必要なPOSTパラメータのみをマッピング\n#foreach( $param in $aParams)\n #set($hParam = $param.split(\"=\"))\n #if( $hParam[0] == \"text\")\n \"text\" : \"$util.urlDecode($hParam[1])\",\n #end\n #if( $hParam[0] == \"user_name\")\n \"user\" : \"$util.urlDecode($hParam[1])\",\n #end\n#end\n\n ## カンマ制御のためのダミー\n \"dummy\" : null\n}"
+            "application/x-www-form-urlencoded": "## slackのOutgoing Webhooksから下記の形式で送信される\n## token=viK8ruCmEfBjd9u84MOEeTWo\n## team_id=T0001\n## team_domain=例\n## channel_id=C2147483705\n## channel_name=テスト\n## timestamp=1355517523.000005\n## user_id=U2147483697\n## user_name=スティーブ\n## text=googlebot: 身軽なツバメの対気速度はどのくらい？\n## trigger_word=googlebot:\n\n## POSTパラメータの分割（A=x&B=y）\n#set($aParams = $input.body.split(\"&\"))\n\n## path変数の分割\n#set($aPaths = $input.params('proxy').split(\"/\"))\n\n## 出力されるJSONデータの生成\n{\n ##pathの次階層をactionとする\n \"action\" : \"$aPaths[0]\",\n\n## 必要なPOSTパラメータのみをマッピング\n#foreach( $param in $aParams)\n \"sender\" : \"slack\",\n #set($hParam = $param.split(\"=\"))\n #if( $hParam[0] == \"text\")\n \"text\" : \"$util.urlDecode($hParam[1])\",\n #end\n #if( $hParam[0] == \"user_name\")\n \"user\" : \"$util.urlDecode($hParam[1])\",\n #end\n#end\n\n ## カンマ制御のためのダミー\n \"dummy\" : null\n}"
           },
           "contentHandling": "CONVERT_TO_TEXT",
           "type": "aws"
@@ -88,7 +94,7 @@
       "in": "query",
       "x-amazon-apigateway-authtype": "custom",
       "x-amazon-apigateway-authorizer": {
-        "authorizerUri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:707983430756:function:APIGateway-Authorization/invocations",
+        "authorizerUri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:{aws-account-id}:function:APIGateway-Authorization/invocations",
         "authorizerResultTtlInSeconds": 300,
         "identitySource": "method.request.querystring.token",
         "type": "request"
