@@ -12,10 +12,10 @@ import json
 
 class PahoAwsIot:
 
-	def __init__(self, **args):
-		self.logger = args['logging'].getLogger(__name__)
+	def __init__(self, **kargs):
+		self.logger = kargs['logging'].getLogger(__name__)
 
-		self.topic_sub = args['topic_sub']
+		self.topic_sub = kargs['topic_sub']
 
 		# Initiate MQTT Client
 		mqttc = mqtt.Client()
@@ -27,9 +27,9 @@ class PahoAwsIot:
 
 		# Configure TLS Set
 		mqttc.tls_set(
-			args['ca'],
-			certfile = args['cert'],
-			keyfile = args['key'],
+			kargs['ca'],
+			certfile = kargs['cert'],
+			keyfile = kargs['key'],
 			cert_reqs = ssl.CERT_REQUIRED,
 			tls_version = ssl.PROTOCOL_TLSv1_2,
 			ciphers = None
@@ -37,9 +37,9 @@ class PahoAwsIot:
 
 		# Connect with MQTT Broker
 		mqttc.connect(
-			args['host'],
-			int(args['port']),
-			int(args['keepalive'])
+			kargs['host'],
+			int(kargs['port']),
+			int(kargs['keepalive'])
 		)
 
 		self.mqttc = mqttc
@@ -49,7 +49,6 @@ class PahoAwsIot:
 		Define on connect event function
 		We shall subscribe to our Topic in this function
 		"""
-		self.logger.error(self.topic_sub)
 		self.mqttc.subscribe(self.topic_sub, 0)
 
 	def _on_message(self, mosq, obj, msg):
@@ -66,10 +65,10 @@ class PahoAwsIot:
 	def loop_start(self):
 		return self.mqttc.loop_start()
 
-	def loop_stop(self, force=False):
+	def loop_stop(self, force = False):
 		return self.mqttc.loop_stop(force)
 
-	def loop_forever(self, timeout):
+	def loop_forever(self, timeout = 1.0):
 		# Continue monitoring the incoming messages for subscribed topic
 		return self.mqttc.loop_forever(timeout)
 

@@ -8,9 +8,9 @@ import uuid
 from time import sleep
 
 # user modules
-from pyfw import util
+from pyfw.libs import util
 from pyfw.error.error import Error, ParamError
-from pyfw.error.httperror import HttpInternalError
+from pyfw.error.httperror import HttpInternalError, HttpUnavailableError
 
 from pahoraspberrypi import PahoRaspberryPi
 
@@ -19,25 +19,25 @@ class RaspberryPi:
     RaspberryPi操作クラス
     """
 
-    def __init__(self, **args):
-        self.logger = args['logging'].getLogger(__name__)
+    def __init__(self, **kargs):
+        self.logger = kargs['logging'].getLogger(__name__)
 
         # publishのみ
         self.iot = boto3.client('iot-data')
 
         # subscribe：RaspberryPiからのレスポンス待ち準備
         # パラメータが定義されていた場合
-        if 'host' in args and args['host']:
+        if 'host' in kargs and kargs['host']:
             self.topic_sub = 'raspberrypi/response'
             self.paho = PahoRaspberryPi(
                 topic_sub = self.topic_sub,
-                ca = args['ca'],
-                cert = args['cert'],
-                key = args['key'],
-                host = args['host'],
+                ca = kargs['ca'],
+                cert = kargs['cert'],
+                key = kargs['key'],
+                host = kargs['host'],
                 port = 8883,
                 keepalive = 3,
-                logging = args['logging'],
+                logging = kargs['logging'],
                 on_message = self.on_response
             )
     
@@ -85,7 +85,7 @@ class RaspberryPi:
                 break;
             sleep(0.1)
         else:
-            raise HttpUnavailableError("タイムアウトが発生しました。")
+            raise HttpUnavailableError("端末への要求がタイムアウトがしました。")
 
         # callback状況の確認
         if not self.response:

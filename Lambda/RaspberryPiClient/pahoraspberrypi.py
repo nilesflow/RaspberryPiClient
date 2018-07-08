@@ -10,10 +10,10 @@ class PahoRaspberryPi(PahoAwsIot, object):
  Callbackを実装するため
   """
  
- def __init__(self, **args):
-  super(PahoRaspberryPi, self).__init__(**args)
+ def __init__(self, **kargs):
+  super(PahoRaspberryPi, self).__init__(**kargs)
   
-  self.on_message = args['on_message']
+  self.on_message = kargs['on_message']
 
  def _on_message(self, mosq, obj, msg):
   """
