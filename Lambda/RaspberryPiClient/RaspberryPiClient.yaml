@@ -1,14 +1,14 @@
 ﻿AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: from APIGateway to AWS IoT & RaspberryPi
+Description: RaspberryPi（AWS IoT）とSlackの入出力
 Resources:
-  APIGatewayRaspberyPi:
+  RaspberryPiClient:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: lambda_function.lambda_handler
       Runtime: python3.6
       CodeUri: .
-      Description: from APIGateway to AWS IoT & RaspberryPi
+      Description: RaspberryPi（AWS IoT）とSlackの入出力
       MemorySize: 128
       Timeout: 10
       Role: 'your role'
@@ -18,8 +18,15 @@ Resources:
           Properties:
             Path: '/raspberrypi/{proxy+}'
             Method: POST
+        IoTRule1:
+          Type: IoTRule
+          Properties:
+            Sql: SELECT * FROM 'raspberrypi/notify'
       Environment:
         Variables:
+          LOGGING_LEVEL: DEBUG
+          SLACK_WEBHOOK_URL: >-
+            https://hooks.slack.com/services/your/slack/webhookurl
           SUBSCRIBE_CAROOTFILE: certs/root-CA.crt
           SUBSCRIBE_CERTFILE: certs/certificate.pem.crt
           SUBSCRIBE_HOST: yourhostname.iot.region.amazonaws.com
