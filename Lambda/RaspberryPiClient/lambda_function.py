@@ -5,6 +5,7 @@
 import os
 import sys
 import logging
+import re
 
 # 実行ディレクトリ＆モジュールパス設定
 dir = os.path.dirname(os.path.abspath(__file__))
@@ -107,7 +108,11 @@ def lambda_handler(event, context):
                 if 'text' not in event:
                     raise HttpParamError("textが指定されていません。")
                 text = event['text']
-    
+
+                # テキスト処理
+                ## リマインダ用のprefixを削除
+                text = re.sub(r"^Reminder: ", "", text)
+
                 # 音声出力処理
                 cwd = os.getcwd()
                 pi = RaspberryPi(
